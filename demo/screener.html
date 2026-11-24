@@ -1,0 +1,273 @@
+<title>Spanish Battery Screener</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a trading-desk screen. Controls rail on the left, a KPI strip, then three instruments: annual margin, value vs capex, one delivery day. */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --ink:#10201d; --ink2:#4a5a57; --muted:#80908c; --rule:#dbe2e0; --grid:#e8eeec;
+  --sell:#2a78d6; --buy:#d9822b; --pf:#10201d; --good:#0d8a4e; --bad:#c93d3d; --chip:#e9efed;
+  --display:'Archivo','Inter',system-ui,sans-serif; --body:'Inter',system-ui,-apple-system,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1413; --panel:#131d1b; --ink:#e6eeec; --ink2:#a9b8b4; --muted:#76858180; --rule:#24312e; --grid:#1c2826;
+  --sell:#4a93ea; --buy:#e6953f; --pf:#e6eeec; --good:#3cbf7e; --bad:#ec6b6b; --chip:#1c2826; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1413; --panel:#131d1b; --ink:#e6eeec; --ink2:#a9b8b4; --muted:#768581; --rule:#24312e; --grid:#1c2826;
+  --sell:#4a93ea; --buy:#e6953f; --pf:#e6eeec; --good:#3cbf7e; --bad:#ec6b6b; --chip:#1c2826; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:16px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(24px,3.4vw,36px);line-height:1.08;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--ink2);max-width:72ch;margin:0}
+.main{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.rail{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;display:grid;gap:18px;position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+@media (max-width:860px){.rail{position:static}}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:10px}
+legend{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.02em;margin-bottom:4px}
+.ctl{display:grid;gap:4px}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink2)}
+.ctl output{font-family:var(--mono);color:var(--ink);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--sell)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink2);font:500 12.5px var(--body);padding:7px 6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.seg button:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--sell);outline-offset:2px}
+.note{font-size:11.5px;color:var(--muted);margin:0}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.kpi .k{font-size:11.5px;color:var(--ink2)}
+.kpi .v{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .s{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pill{display:inline-block;font:600 10.5px var(--mono);padding:2px 7px;border-radius:99px;background:var(--chip);color:var(--ink2);letter-spacing:.04em}
+.pill.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.no{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:grid;gap:8px;min-width:0}
+.card h2{font-family:var(--display);font-weight:700;font-size:15px;margin:0}
+.card p.sub{margin:0;color:var(--ink2);font-size:12.5px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:980px){.row2{grid-template-columns:minmax(0,1fr)}}
+svg{width:100%;height:auto;display:block;overflow:visible}
+svg text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+svg .lab{fill:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--panel);font:12px var(--mono);padding:6px 8px;border-radius:6px;z-index:20;white-space:nowrap}
+.dayctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.dayctl input[type=range]{flex:1;min-width:160px}
+.daytitle{font-family:var(--mono);font-size:12.5px}
+footer{color:var(--muted);font-size:12px;max-width:90ch}
+footer a{color:var(--ink2)}
+.busy{opacity:.55;transition:opacity .15s}
+@media (prefers-reduced-motion:reduce){.busy{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Spanish day-ahead market · 1 Jan 2023 – 25 Nov 2026 · 1.425 delivery days</div>
+    <h1>What is a grid battery worth in Spain?</h1>
+    <p class="lede">Design a battery, choose how it decides, and set the investment terms. The screen re-runs the battery's optimal schedule on every day since 2023, using the forecast it would have had at noon the day before, settles it at the prices that actually cleared, and values the result as a 15-year project.</p>
+  </header>
+
+  <div class="main">
+    <aside class="rail" aria-label="Inputs">
+      <fieldset>
+        <legend>Battery</legend>
+        <div class="ctl"><label for="dur">Duration (MWh per MW) <output id="durv"></output></label>
+          <div class="seg" role="group" aria-label="Duration" id="dur"><button type="button" data-v="1" aria-pressed="false">1 h</button><button type="button" data-v="2" aria-pressed="true">2 h</button><button type="button" data-v="4" aria-pressed="false">4 h</button></div></div>
+        <div class="ctl"><label for="rte">Round-trip efficiency <output id="rtev"></output></label><input id="rte" type="range" min="75" max="95" value="87"></div>
+        <div class="ctl"><label for="wear">Wear cost, € per MWh discharged <output id="wearv"></output></label><input id="wear" type="range" min="0" max="40" value="15"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Decision rule</legend>
+        <div class="seg" role="group" aria-label="Prices used to schedule" id="strat"><button type="button" data-v="fc" aria-pressed="true">ML forecast</button><button type="button" data-v="pf" aria-pressed="false">Perfect foresight</button></div>
+        <p class="note">ML forecast: the LEAR + LightGBM ensemble, made walk-forward with prices known at noon of D−1. Perfect foresight is the upper bound no desk can reach.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Investment</legend>
+        <div class="ctl"><label for="capex">Installed cost, € per kWh <output id="capexv"></output></label><input id="capex" type="range" min="80" max="320" step="5" value="200"></div>
+        <div class="ctl"><label for="wacc">Cost of capital <output id="waccv"></output></label><input id="wacc" type="range" min="5" max="14" step="0.5" value="10"></div>
+        <div class="ctl"><label for="comp">Spread compression per year <output id="compv"></output></label><input id="comp" type="range" min="0" max="10" step="0.5" value="3"></div>
+        <div class="ctl"><label for="win">Revenue base</label>
+          <div class="seg" role="group" aria-label="Revenue window" id="win"><button type="button" data-v="2023" aria-pressed="true">2023–26</button><button type="button" data-v="2025" aria-pressed="false">2025–26</button></div></div>
+        <p class="note">15-year life, 2% capacity fade a year, O&amp;M 2% of capex a year, pre-tax and unlevered. Day-ahead arbitrage only: no ancillary or capacity revenue.</p>
+      </fieldset>
+    </aside>
+
+    <section style="display:grid;gap:16px;min-width:0" id="out">
+      <div class="kpis">
+        <div class="kpi"><span class="k">Net margin, 2025</span><span class="v" id="k1">–</span><span class="s" id="k1s">€ per MW-year</span></div>
+        <div class="kpi"><span class="k">Capture of perfect foresight</span><span class="v" id="k2">–</span><span class="s" id="k2s">2023–2026</span></div>
+        <div class="kpi"><span class="k">Full cycles per year</span><span class="v" id="k3">–</span><span class="s">2023–2026 average</span></div>
+        <div class="kpi"><span class="k">Project NPV</span><span class="v" id="k4">–</span><span class="s" id="k4s">€ per MW</span></div>
+        <div class="kpi"><span class="k">Project IRR</span><span class="v" id="k5">–</span><span class="s" id="k5s">pre-tax</span></div>
+        <div class="kpi"><span class="k">Break-even installed cost</span><span class="v" id="k6">–</span><span class="s">€ per kWh at this WACC</span></div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <h2>Net margin by year</h2>
+          <p class="sub">€ per MW-year after fees and wear. 2026 runs to 25 November.</p>
+          <div class="legend"><span><i style="background:var(--sell)"></i>chosen decision rule</span><span><i style="background:transparent;border:2px solid var(--pf);border-radius:50%;width:8px;height:8px"></i>perfect foresight</span></div>
+          <svg id="bars" viewBox="0 0 520 250" role="img" aria-label="Net margin by year"></svg>
+        </div>
+        <div class="card">
+          <h2>What the project is worth at each installed cost</h2>
+          <p class="sub">NPV per MW. The dot is the installed cost you set; the line crosses zero at break-even.</p>
+          <svg id="npv" viewBox="0 0 520 250" role="img" aria-label="NPV against installed cost"></svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>One delivery day</h2>
+        <div class="dayctl"><input id="day" type="range" min="0" max="1" value="0" aria-label="Delivery day"><span class="daytitle" id="daytitle"></span></div>
+        <div class="legend"><span><i style="background:var(--ink2)"></i>cleared price</span><span><i style="background:var(--sell);height:3px;vertical-align:3px"></i>forecast at noon D−1</span><span><i style="background:var(--buy)"></i>buy</span><span><i style="background:var(--sell)"></i>sell</span></div>
+        <svg id="dayc" viewBox="0 0 1000 300" role="img" aria-label="Prices and battery schedule for the selected day"></svg>
+      </div>
+
+      <footer>Data: Red Eléctrica de España, REData (Precio mercado spot), hourly, quarter-hours averaged. The schedule is solved by dynamic programming on a 41-level state-of-charge grid, within about 1% of the linear programme in the manuscript. Capex reference points: about €120/kWh all-in (Ember, Oct 2025, large projects outside China and the US) and about €255/kWh European turnkey before EPC and grid (BNEF 2024). AI for Finance capstone, Wassim Ibrahim, IE Business School.</footer>
+    </section>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const eu=(x,d=0)=>{const s=Math.abs(x).toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g,"#").replace(".",",").replace(/#/g,".");return (x<0?"−":"")+s;};
+const NS="http://www.w3.org/2000/svg";
+const E=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const T=(p,x,y,s,a={})=>{const e=E("text",Object.assign({x,y},a),p);e.textContent=s;return e;};
+const tip=$("#tip");
+function showTip(ev,html){tip.innerHTML=html;tip.hidden=false;const x=Math.min(ev.clientX+12,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(ev.clientY-36)+"px";}
+function hideTip(){tip.hidden=true;}
+
+const S={dur:2,rte:87,wear:15,strat:"fc",capex:200,wacc:10,comp:3,win:"2023"};
+let D=null, R=null;
+
+/* ---- optimal daily schedule: dynamic programme over a 41-level state-of-charge grid ---- */
+const N=41;
+function solveDay(sig,P,Emax,eta,fee,wear){
+  const step=Emax/(N-1), up=Math.floor(eta*P/step+1e-9), dn=Math.floor(P/eta/step+1e-9);
+  const V=new Float64Array(25*N).fill(-1e18), A=new Int16Array(24*N);
+  V[24*N+0]=0;
+  for(let h=23;h>=0;h--){const p=sig[h];
+    for(let s=0;s<N;s++){let best=-1e18,bs=s;
+      const lo=Math.max(0,s-dn),hi=Math.min(N-1,s+up);
+      for(let t=lo;t<=hi;t++){const v=V[(h+1)*N+t];if(v<-1e17)continue;const de=(t-s)*step;let cash;
+        if(de>0){const c=de/eta;cash=-(p+fee)*c;}else if(de<0){const d=-de*eta;cash=(p-fee-wear)*d;}else cash=0;
+        if(cash+v>best){best=cash+v;bs=t;}}
+      V[h*N+s]=best;A[h*N+s]=bs;}}
+  const path=[0];let s=0;for(let h=0;h<24;h++){s=A[h*N+s];path.push(s);}return {path,step};
+}
+function settleDay(path,step,price,eta,fee,wear){let gross=0,out=0,flows=[];
+  for(let h=0;h<24;h++){const de=(path[h+1]-path[h])*step;let f=0;
+    if(de>0){const c=de/eta;gross+=-(price[h]+fee)*c;f=-c;}else if(de<0){const d=-de*eta;gross+=(price[h]-fee)*d;out+=d;f=d;}flows.push(f);}
+  return {gross,net:gross-wear*out,out,flows};}
+
+function runAll(){
+  const P=1,Emax=S.dur,eta=Math.sqrt(S.rte/100),fee=0.5,wear=S.wear;
+  const res={byYear:{},pfYear:{},days:[]};let totC=0,totPF=0,cyc=0;
+  for(let i=0;i<D.dates.length;i++){const y=D.dates[i].slice(0,4),price=D.price[i];
+    const pf=solveDay(price,P,Emax,eta,fee,wear), rp=settleDay(pf.path,pf.step,price,eta,fee,wear);
+    let rc=rp,path=pf.path;
+    if(S.strat==="fc"){const fc=solveDay(D.fcst[i],P,Emax,eta,fee,wear);rc=settleDay(fc.path,fc.step,price,eta,fee,wear);path=fc.path;}
+    res.byYear[y]=(res.byYear[y]||0)+rc.net;res.pfYear[y]=(res.pfYear[y]||0)+rp.net;
+    res.days.push({gross:rc.gross,net:rc.net,path,flows:rc.flows,step:pf.step});
+    totC+=rc.net;totPF+=rp.net;cyc+=rc.out/(Emax*eta);}
+  res.capture=totC/totPF;res.cycles=cyc/(D.dates.length/365.25);return res;}
+
+/* ---- valuation ---- */
+function annualGross(){const from=S.win+"-01-01";let g=0,n=0;
+  for(let i=0;i<D.dates.length;i++){if(D.dates[i]>=from&&D.dates[i]<="2026-10-31"){g+=R.days[i].gross;n++;}}return g/n*365.25;}
+function pvRev(rev){let pv=0;const r=S.wacc/100,c=S.comp/100;for(let t=1;t<=15;t++)pv+=rev*Math.pow(0.98,t-1)*Math.pow(1-c,t-1)/Math.pow(1+r,t);return pv;}
+function annuity(){let a=0;const r=S.wacc/100;for(let t=1;t<=15;t++)a+=1/Math.pow(1+r,t);return a;}
+function npvAt(capexKwh,rev){const capex=capexKwh*S.dur*1000;return -capex+pvRev(rev)-0.02*capex*annuity();}
+function irr(capexKwh,rev){const capex=capexKwh*S.dur*1000,c=S.comp/100;const cf=t=>rev*Math.pow(0.98,t-1)*Math.pow(1-c,t-1)-0.02*capex;
+  const f=r=>{let v=-capex;for(let t=1;t<=15;t++)v+=cf(t)/Math.pow(1+r,t);return v;};let lo=-0.9,hi=1;if(f(lo)*f(hi)>0)return NaN;
+  for(let k=0;k<80;k++){const m=(lo+hi)/2;if(f(lo)*f(m)<=0)hi=m;else lo=m;}return (lo+hi)/2;}
+
+/* ---- render ---- */
+function renderKPIs(){
+  const y25=R.byYear["2025"]||0;$("#k1").textContent="€"+eu(y25);$("#k1s").textContent="€ per MW-year · perfect "+eu(R.pfYear["2025"]||0);
+  $("#k2").textContent=eu(100*R.capture,1)+"%";$("#k2s").textContent=S.strat==="pf"?"by definition":"ML forecast vs perfect";
+  $("#k3").textContent=eu(R.cycles,0);
+  const rev=annualGross(),v=npvAt(S.capex,rev),ir=irr(S.capex,rev),be=pvRev(rev)/(S.dur*1000*(1+0.02*annuity()));
+  $("#k4").textContent=(v>=0?"+€":"−€")+eu(Math.abs(v)/1000,0)+"k";$("#k4s").innerHTML='€ per MW · <span class="pill '+(v>=0?"ok":"no")+'">'+(v>=0?"CLEARS":"FAILS")+" "+eu(S.wacc,1)+"%</span>";
+  $("#k5").textContent=isNaN(ir)?"n/a":eu(100*ir,1)+"%";$("#k5s").textContent="year-1 gross €"+eu(rev)+" per MW";
+  $("#k6").textContent="€"+eu(be);return {rev,be};}
+
+function renderBars(){const svg=$("#bars");svg.innerHTML="";const W=520,H=250,m={l:52,r:10,t:12,b:26};
+  const ys=Object.keys(R.byYear).sort(),mx=Math.max(...ys.map(y=>Math.max(R.byYear[y],R.pfYear[y])))*1.12;
+  const sx=i=>m.l+(i+0.5)*(W-m.l-m.r)/ys.length,sy=v=>H-m.b-Math.max(0,v)/mx*(H-m.t-m.b);
+  const tick=mx>60000?20000:10000;for(let v=0;v<=mx;v+=tick){E("line",{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:"var(--grid)"},svg);T(svg,m.l-6,sy(v)+3,eu(v/1000)+"k",{"text-anchor":"end"});}
+  ys.forEach((y,i)=>{const bw=(W-m.l-m.r)/ys.length*0.46,x=sx(i)-bw/2,v=R.byYear[y];
+    const r=E("rect",{x,y:sy(v),width:bw,height:Math.max(1,sy(0)-sy(v)),rx:3,fill:"var(--sell)"},svg);
+    const pf=R.pfYear[y];E("circle",{cx:sx(i),cy:sy(pf),r:5,fill:"var(--panel)",stroke:"var(--pf)","stroke-width":2},svg);
+    T(svg,sx(i),H-8,y,{"text-anchor":"middle",class:"lab"});
+    if(sy(0)-sy(v)>22)T(svg,sx(i),sy(v)+15,eu(v/1000,1)+"k",{"text-anchor":"middle",style:"fill:#fff"});
+    const hit=E("rect",{x:sx(i)-(W-m.l-m.r)/ys.length/2,y:m.t,width:(W-m.l-m.r)/ys.length,height:H-m.t-m.b,fill:"transparent"},svg);
+    hit.addEventListener("mousemove",ev=>showTip(ev,`${y}: €${eu(v)} · perfect €${eu(pf)} · ${eu(100*v/pf,1)}%`));hit.addEventListener("mouseleave",hideTip);});}
+
+function renderNPV(be){const svg=$("#npv");svg.innerHTML="";const W=520,H=250,m={l:58,r:14,t:12,b:30};const rev=annualGross();
+  const xs=[];for(let c=80;c<=320;c+=5)xs.push(c);const vs=xs.map(c=>npvAt(c,rev));
+  const lo=Math.min(...vs,0),hi=Math.max(...vs,0),pad=(hi-lo)*0.08;const y0=lo-pad,y1=hi+pad;
+  const sx=c=>m.l+(c-80)/240*(W-m.l-m.r),sy=v=>m.t+(y1-v)/(y1-y0)*(H-m.t-m.b);
+  const step=Math.pow(10,Math.floor(Math.log10((y1-y0)/4)));const st=(y1-y0)/step>8?step*2:step;
+  for(let v=Math.ceil(y0/st)*st;v<=y1;v+=st){E("line",{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:"var(--grid)"},svg);T(svg,m.l-6,sy(v)+3,eu(v/1000)+"k",{"text-anchor":"end"});}
+  E("line",{x1:m.l,x2:W-m.r,y1:sy(0),y2:sy(0),stroke:"var(--ink2)","stroke-width":1},svg);
+  [80,120,160,200,240,280,320].forEach(c=>T(svg,sx(c),H-10,"€"+c,{"text-anchor":"middle"}));
+  [[120,"Ember all-in"],[255,"BNEF EU turnkey"]].forEach(([c,l])=>{E("line",{x1:sx(c),x2:sx(c),y1:m.t,y2:H-m.b,stroke:"var(--rule)","stroke-dasharray":"3 3"},svg);T(svg,sx(c)+4,m.t+10,l,{});});
+  let d="";xs.forEach((c,i)=>d+=(i?"L":"M")+sx(c).toFixed(1)+" "+sy(vs[i]).toFixed(1));E("path",{d,fill:"none",stroke:"var(--sell)","stroke-width":2.2},svg);
+  if(be>=80&&be<=320)E("circle",{cx:sx(be),cy:sy(0),r:4,fill:"var(--ink)"},svg);
+  const v=npvAt(S.capex,rev);E("circle",{cx:sx(S.capex),cy:sy(v),r:6,fill:v>=0?"var(--good)":"var(--bad)",stroke:"var(--panel)","stroke-width":2},svg);
+  T(svg,sx(S.capex)+9,sy(v)-8,"€"+S.capex+"/kWh: "+(v>=0?"+€":"−€")+eu(Math.abs(v)/1000)+"k",{class:"lab"});
+  const hit=E("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:"transparent"},svg);
+  hit.addEventListener("mousemove",ev=>{const r=svg.getBoundingClientRect();const c=Math.round((80+(ev.clientX-r.left)/r.width*W-m.l)/1);const cc=Math.max(80,Math.min(320,Math.round((c-m.l)/(W-m.l-m.r)*240+80)));showTip(ev,`€${cc}/kWh → NPV ${eu(npvAt(cc,rev)/1000)}k €/MW`);});
+  hit.addEventListener("mouseleave",hideTip);}
+
+function renderDay(){const i=+$("#day").value,svg=$("#dayc");svg.innerHTML="";const W=1000,H=300,m={l:52,r:52,t:14,b:28};
+  const pr=D.price[i],fc=D.fcst[i],day=R.days[i];const dt=new Date(D.dates[i]+"T12:00:00");
+  $("#daytitle").textContent=dt.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})+" · day margin €"+eu(day.net,0)+" per MW";
+  const all=pr.concat(fc),lo=Math.min(0,...all),hi=Math.max(...all)*1.08+1;
+  const ph=H-m.t-m.b,sx=h=>m.l+h*(W-m.l-m.r)/24,sy=v=>m.t+(hi-v)/(hi-lo)*ph*0.72;
+  const fy0=m.t+ph*0.80,fy=v=>fy0-v*ph*0.18;
+  const rg=hi-lo,st=rg>200?50:rg>80?25:rg>40?10:5;
+  for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st){E("line",{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:"var(--grid)"},svg);T(svg,m.l-6,sy(v)+3,eu(v),{"text-anchor":"end"});}
+  T(svg,W-m.r+6,sy(hi)+10,"€/MWh",{});
+  E("line",{x1:m.l,x2:W-m.r,y1:fy0,y2:fy0,stroke:"var(--rule)"},svg);T(svg,W-m.r+6,fy0+3,"0 MW",{});
+  day.flows.forEach((f,h)=>{if(Math.abs(f)<1e-6)return;const x=sx(h)+3,w=(W-m.l-m.r)/24-6;
+    E("rect",{x,y:f>0?fy(f):fy0,width:w,height:Math.max(1,Math.abs(fy(f)-fy0)),rx:2,fill:f>0?"var(--sell)":"var(--buy)"},svg);});
+  const line=(a,col,dash,wd)=>{let d="";a.forEach((v,h)=>d+=(h?"L":"M")+(sx(h)+ (W-m.l-m.r)/48).toFixed(1)+" "+sy(v).toFixed(1));E("path",{d,fill:"none",stroke:col,"stroke-width":wd,"stroke-dasharray":dash},svg);};
+  line(pr,"var(--ink2)","0",2.2);line(fc,"var(--sell)","6 4",1.8);
+  for(let h=0;h<24;h+=3)T(svg,sx(h)+(W-m.l-m.r)/48,H-8,String(h).padStart(2,"0")+":00",{"text-anchor":"middle"});
+  const hit=E("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:ph,fill:"transparent"},svg);
+  hit.addEventListener("mousemove",ev=>{const r=svg.getBoundingClientRect();const h=Math.max(0,Math.min(23,Math.floor(((ev.clientX-r.left)/r.width*W-m.l)/((W-m.l-m.r)/24))));
+    const f=day.flows[h];showTip(ev,`${String(h).padStart(2,"0")}:00 · cleared €${eu(pr[h],1)} · forecast €${eu(fc[h],1)} · ${f>0?"sell "+eu(f,2)+" MW":f<0?"buy "+eu(-f,2)+" MW":"idle"}`);});
+  hit.addEventListener("mouseleave",hideTip);}
+
+let pend=null;
+function recompute(){const out=$("#out");out.classList.add("busy");clearTimeout(pend);pend=setTimeout(()=>{R=runAll();render();out.classList.remove("busy");},20);}
+function revalue(){render();}
+function render(){$("#durv").textContent=S.dur+" MWh";$("#rtev").textContent=S.rte+"%";$("#wearv").textContent="€"+S.wear;
+  $("#capexv").textContent="€"+S.capex;$("#waccv").textContent=eu(S.wacc,1)+"%";$("#compv").textContent=eu(S.comp,1)+"%";
+  const k=renderKPIs();renderBars();renderNPV(k.be);renderDay();}
+
+function seg(id,key,num,heavy){document.querySelectorAll("#"+id+" button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#"+id+" button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  S[key]=num?+b.dataset.v:b.dataset.v;heavy?recompute():revalue();}));}
+seg("dur","dur",true,true);seg("strat","strat",false,true);seg("win","win",false,false);
+[["rte",true],["wear",true],["capex",false],["wacc",false],["comp",false]].forEach(([id,heavy])=>{
+  const el=$("#"+id);el.addEventListener("input",()=>{S[id]=+el.value;if(heavy){$("#"+id+"v").textContent=id==="rte"?el.value+"%":"€"+el.value;}else revalue();});
+  if(heavy)el.addEventListener("change",recompute);});
+$("#day").addEventListener("input",renderDay);
+
+fetch("demo_prices.json").then(r=>r.json()).then(j=>{D=j;const el=$("#day");el.max=D.dates.length-1;el.value=D.dates.indexOf("2026-04-15");recompute();})
+ .catch(()=>{$("#out").innerHTML='<div class="card"><h2>The price data did not load</h2><p class="sub">Reload the page. If it persists, the data file demo_prices.json is missing next to the page.</p></div>';});
+})();
+</script>

@@ -1,0 +1,187 @@
+{
+ "test_period": "2019-01-01 to 2026-11-25",
+ "days_test": 2886,
+ "ann_perfect": {
+  "2019": 1097.0,
+  "2020": 941.0,
+  "2021": 15177.0,
+  "2022": 40172.0,
+  "2023": 33407.0,
+  "2024": 34445.0,
+  "2025": 54388.0,
+  "2026": 71969.0
+ },
+ "ann_ensemble": {
+  "2019": 514.0,
+  "2020": 442.0,
+  "2021": 7431.0,
+  "2022": 28582.0,
+  "2023": 27145.0,
+  "2024": 28901.0,
+  "2025": 49149.0,
+  "2026": 67038.0
+ },
+ "capture_total": {
+  "perfect": 100.0,
+  "ensemble": 83.2,
+  "lear": 81.5,
+  "lgbm": 79.1,
+  "naive_d1": 74.5,
+  "naive_d7": 74.2,
+  "clock": 65.2
+ },
+ "forecast_mae": {
+  "naive_d1": 16.93,
+  "naive_d7": 24.4,
+  "lear": 14.51,
+  "lgbm": 15.19,
+  "ensemble": 13.8
+ },
+ "rank_corr": {
+  "naive_d1": 0.74,
+  "naive_d7": 0.771,
+  "lear": 0.824,
+  "lgbm": 0.814,
+  "ensemble": 0.838
+ },
+ "regime_capture": {
+  "2019-2020 pre-crisis": {
+   "perfect": 100.0,
+   "ensemble": 46.9,
+   "lear": 32.0,
+   "lgbm": 20.4,
+   "naive_d1": -49.5,
+   "naive_d7": -58.4,
+   "clock": 0.0
+  },
+  "2021-2022 gas crisis": {
+   "perfect": 100.0,
+   "ensemble": 65.1,
+   "lear": 61.5,
+   "lgbm": 56.9,
+   "naive_d1": 55.0,
+   "naive_d7": 56.7,
+   "clock": 30.0
+  },
+  "2023-2026 solar era": {
+   "perfect": 100.0,
+   "ensemble": 88.7,
+   "lear": 87.7,
+   "lgbm": 86.0,
+   "naive_d1": 81.4,
+   "naive_d7": 80.6,
+   "clock": 75.9
+  }
+ },
+ "dm": {
+  "Mean daily gain (EUR)": {
+   "lear": 1.4419,
+   "lgbm": 3.544,
+   "naive_d1": 7.523,
+   "naive_d7": 7.7888,
+   "clock": 15.6219
+  },
+  "DM statistic": {
+   "lear": 3.7706,
+   "lgbm": 6.4294,
+   "naive_d1": 12.9574,
+   "naive_d7": 11.0704,
+   "clock": 13.6487
+  },
+  "p-value": {
+   "lear": 0.0002,
+   "lgbm": 0.0,
+   "naive_d1": 0.0,
+   "naive_d7": 0.0,
+   "clock": 0.0
+  }
+ },
+ "rl": {
+  "Net margin (EUR/MW)": {
+   "perfect": 160801.9,
+   "ensemble": 145088.2,
+   "rl": 124034.8,
+   "clock": 125382.6
+  },
+  "Cycles per year": {
+   "perfect": 473.4,
+   "ensemble": 468.8,
+   "rl": 359.3,
+   "clock": 365.2
+  },
+  "Capture (%)": {
+   "perfect": 100.0,
+   "ensemble": 90.2,
+   "rl": 77.1,
+   "clock": 78.0
+  }
+ },
+ "sens": {
+  "Perfect (EUR/MW-yr)": {
+   "Base: 2 h, RTE 87%, wear 15": 49813.7,
+   "Duration 1 h": 27066.2,
+   "Duration 4 h": 83035.1,
+   "RTE 80%": 44524.1,
+   "RTE 92%": 53824.8,
+   "Wear 0 EUR/MWh": 64644.1,
+   "Wear 30 EUR/MWh": 37916.8
+  },
+  "Ensemble (EUR/MW-yr)": {
+   "Base: 2 h, RTE 87%, wear 15": 44177.2,
+   "Duration 1 h": 23603.0,
+   "Duration 4 h": 74963.7,
+   "RTE 80%": 38777.5,
+   "RTE 92%": 48235.7,
+   "Wear 0 EUR/MWh": 59564.0,
+   "Wear 30 EUR/MWh": 31943.4
+  },
+  "Capture (%)": {
+   "Base: 2 h, RTE 87%, wear 15": 88.7,
+   "Duration 1 h": 87.2,
+   "Duration 4 h": 90.3,
+   "RTE 80%": 87.1,
+   "RTE 92%": 89.6,
+   "Wear 0 EUR/MWh": 92.1,
+   "Wear 30 EUR/MWh": 84.2
+  },
+  "Ensemble cycles/yr": {
+   "Base: 2 h, RTE 87%, wear 15": 461.6,
+   "Duration 1 h": 492.6,
+   "Duration 4 h": 407.9,
+   "RTE 80%": 407.5,
+   "RTE 92%": 510.9,
+   "Wear 0 EUR/MWh": 673.6,
+   "Wear 30 EUR/MWh": 350.4
+  },
+  "Ensemble per MWh of capacity (EUR/yr)": {
+   "Base: 2 h, RTE 87%, wear 15": 22088.6,
+   "Duration 1 h": 23603.0,
+   "Duration 4 h": 18740.9,
+   "RTE 80%": 19388.7,
+   "RTE 92%": 24117.8,
+   "Wear 0 EUR/MWh": 29782.0,
+   "Wear 30 EUR/MWh": 15971.7
+  }
+ },
+ "valuation_base": {
+  "npv_p10": -145440.43197423464,
+  "npv_p50": -130940.05029665839,
+  "npv_p90": -116215.9113764786,
+  "prob_npv_pos": 0.0,
+  "irr_p50": 0.02795710150791464,
+  "breakeven_capex_eur_kwh": 143.17437872060043
+ },
+ "valuation_2025_26": {
+  "npv_p10": -49685.65164813035,
+  "npv_p50": -38771.35507289402,
+  "npv_p90": -27843.32769363542,
+  "prob_npv_pos": 0.0,
+  "irr_p50": 0.07987287345625338,
+  "breakeven_capex_eur_kwh": 183.17393085713798
+ },
+ "npv_base_mean": -130973.40882225476,
+ "revenue_year1_p50": 55103.64792081146,
+ "revenue_year1_p10": 47510.94778755783,
+ "revenue_year1_p90": 63817.71326647518,
+ "runtime_s": 155
+}

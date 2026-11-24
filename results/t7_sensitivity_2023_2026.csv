@@ -1,0 +1,8 @@
+Case,Perfect (EUR/MW-yr),Ensemble (EUR/MW-yr),Capture (%),Ensemble cycles/yr,Ensemble per MWh of capacity (EUR/yr)
+"Base: 2 h, RTE 87%, wear 15",49813.7,44177.2,88.7,461.6,22088.6
+Duration 1 h,27066.2,23603.0,87.2,492.6,23603.0
+Duration 4 h,83035.1,74963.7,90.3,407.9,18740.9
+RTE 80%,44524.1,38777.5,87.1,407.5,19388.7
+RTE 92%,53824.8,48235.7,89.6,510.9,24117.8
+Wear 0 EUR/MWh,64644.1,59564.0,92.1,673.6,29782.0
+Wear 30 EUR/MWh,37916.8,31943.4,84.2,350.4,15971.7

@@ -1,0 +1,8 @@
+,"Net margin, test total (EUR/MW)",Capture of perfect foresight (%),Cycles per year,Days with a loss (%)
+perfect,251595.01,100.00,349.78,0.00
+ensemble,209203.55,83.15,316.02,7.59
+lear,205042.22,81.50,359.28,11.54
+lgbm,198975.61,79.09,284.73,6.44
+naive_d1,187492.23,74.52,349.52,13.86
+naive_d7,186725.17,74.22,348.51,14.73
+clock,164118.87,65.23,231.62,8.35

@@ -1,0 +1,5 @@
+,Net margin (EUR/MW),Cycles per year,Capture (%)
+perfect,160801.9,473.4,100.0
+ensemble,145088.2,468.8,90.2
+rl,124034.8,359.3,77.1
+clock,125382.6,365.2,78.0
