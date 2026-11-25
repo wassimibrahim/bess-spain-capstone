@@ -217,6 +217,6 @@ Watkins, C. J. C. H. and Dayan, P. (1992). Q-learning. *Machine Learning*, 8, 27
 
 ## Annex A. Reproducibility and use of generative AI
 
-All results are reproduced by the Colab notebook `capstone_bess_spain.ipynb` and the GitHub repository. Running the notebook top to bottom rewrites every table (`results/t1`–`t10`) and figure (`results/figures/f1`–`f8`). Every number quoted in the text is in `results/key_numbers.json`. The data are stored in the notebook and can be refreshed from the public REE API with `bess.data.download_ree()`.
+All results are reproduced by the GitHub repository (https://github.com/wassimibrahim/bess-spain-capstone) and its Colab notebook `notebooks/capstone_bess_spain.ipynb`, which opens directly from the repository's "Open in Colab" badge. Running the notebook top to bottom rewrites every table (`results/t1`–`t10`) and figure (`results/figures/f1`–`f8`). Every number quoted in the text is in `results/key_numbers.json`. The data are stored in the notebook and can be refreshed from the public REE API with `bess.data.download_ree()`.
 
 **Generative AI.** Claude (Anthropic) was used as a coding and drafting assistant: implementing the pipeline, producing the figures, and editing the text. I specified the research design, checked every result against the code output, and take full responsibility for the methodology, results and interpretation.
