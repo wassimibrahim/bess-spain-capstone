@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Grid Battery Defence</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one 1920x1080 stage scaled to the window; the deck runs from noon to night, the sky changes with each slide */
+:root{
+  --night:#090D1C;      /* ground */
+  --ink:#F3F1FB;        /* primary text */
+  --mute:#A3A9C4;       /* secondary text */
+  --faint:#5D6487;      /* gridlines, ticks */
+  --sun:#FFB547;        /* forecast, highlight, the ensemble */
+  --charge:#45E0B0;     /* cheap hours, charging, value created */
+  --peak:#FF6B5A;       /* dear hours, selling, value destroyed */
+  --glass:rgba(20,24,48,.55);
+  --line:rgba(163,169,196,.22);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important;}
+html,body{height:100%;}
+body{background:var(--night);color:var(--ink);font-family:var(--f-body);overflow:hidden;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));}
+#sky{position:fixed;inset:0;width:100%;height:100%;display:block;}
+.viewport{position:fixed;inset:0;overflow:hidden;}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;}
+.slide{position:absolute;inset:0;padding:96px 128px 120px;display:flex;flex-direction:column;gap:36px;
+  opacity:0;transform:scale(1.025);filter:blur(10px);pointer-events:none;
+  transition:opacity .75s ease,transform 1s cubic-bezier(.2,.7,.2,1),filter .75s ease;}
+.slide.on{opacity:1;transform:none;filter:none;pointer-events:auto;}
+.eyebrow{font-family:var(--f-mono);font-size:24px;letter-spacing:3px;text-transform:uppercase;color:var(--sun);}
+h1,h2{font-family:var(--f-display);font-weight:800;letter-spacing:-1.5px;text-wrap:balance;margin:0;}
+h1{font-size:112px;line-height:.98;max-width:1250px;}
+h2{font-size:68px;line-height:1.04;max-width:1600px;}
+p{margin:0;}
+.lede{font-size:34px;line-height:1.4;color:var(--mute);max-width:1100px;}
+.mono{font-family:var(--f-mono);}
+.tab{font-variant-numeric:tabular-nums;}
+.c-sun{color:var(--sun)}.c-charge{color:var(--charge)}.c-peak{color:var(--peak)}
+svg text{font-family:var(--f-mono);}
+
+/* entrance choreography: elements start visible-at-rest; .play replays the rise */
+.play [data-in]{animation:rise .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d,0ms);}
+@keyframes rise{from{opacity:0;transform:translateY(28px);filter:blur(6px);}}
+
+/* slide 1 */
+.s1-grid{display:grid;grid-template-columns:1fr 760px;gap:64px;flex:1;min-height:0;align-items:end;}
+.s1-left{display:flex;flex-direction:column;gap:40px;}
+.yearbox{display:flex;align-items:baseline;gap:28px;}
+.year{font-family:var(--f-display);font-size:150px;font-weight:800;line-height:.9;letter-spacing:-4px;color:var(--ink);font-variant-numeric:tabular-nums;}
+.spread{display:flex;flex-direction:column;gap:6px;}
+.spread .v{font-family:var(--f-display);font-size:84px;font-weight:800;line-height:1;color:var(--sun);font-variant-numeric:tabular-nums;}
+.spread .k{font-size:24px;color:var(--mute);max-width:420px;line-height:1.35;}
+.byline{font-size:26px;color:var(--mute);}
+.byline b{color:var(--ink);font-weight:600;}
+.chartcard{background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:28px 28px 18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.chartcard .cap{font-size:22px;color:var(--mute);display:flex;justify-content:space-between;gap:16px;margin-bottom:8px;}
+.band{transition:opacity .8s ease;}
+.hide{opacity:0;}
+
+/* slide 2 */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;}
+.pipe svg.flow{position:absolute;left:0;top:30px;width:100%;height:12px;overflow:visible;}
+.node{position:relative;display:flex;flex-direction:column;gap:10px;padding-top:70px;}
+.node .dot{position:absolute;top:18px;left:0;width:36px;height:36px;border-radius:50%;background:var(--night);border:3px solid var(--sun);box-shadow:0 0 24px rgba(255,181,71,.55);display:grid;place-items:center;font-family:var(--f-mono);font-size:16px;font-weight:600;color:var(--sun);}
+.node h3{font-family:var(--f-display);font-size:38px;font-weight:800;margin:0;letter-spacing:-.5px;}
+.node p{font-size:24px;line-height:1.4;color:var(--mute);}
+.s2-low{display:grid;grid-template-columns:1fr 420px;gap:48px;flex:1;min-height:0;align-items:stretch;}
+.earn{display:flex;flex-direction:column;justify-content:center;gap:22px;}
+.earn .v{font-family:var(--f-display);font-size:120px;font-weight:800;line-height:.95;color:var(--charge);font-variant-numeric:tabular-nums;}
+.earn .k{font-size:26px;line-height:1.4;color:var(--mute);}
+.earn .k b{color:var(--ink);font-weight:600;}
+.legend{display:flex;gap:26px;font-size:20px;color:var(--mute);flex-wrap:wrap;}
+.legend i{display:inline-block;width:28px;height:4px;border-radius:2px;vertical-align:middle;margin-right:10px;}
+
+/* slide 3 */
+.s3-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:72px;flex:1;min-height:0;}
+.race{display:flex;flex-direction:column;gap:22px;justify-content:center;}
+.rrow{display:grid;grid-template-columns:400px 1fr;align-items:center;gap:24px;}
+.rrow .nm{font-size:28px;color:var(--mute);line-height:1.2;}
+.rrow .nm small{display:block;font-family:var(--f-mono);font-size:18px;color:var(--faint);margin-top:4px;}
+.rrow.hi .nm{color:var(--ink);font-weight:600;}
+.track{position:relative;height:58px;}
+.fill{position:absolute;left:0;top:0;height:100%;border-radius:10px;background:rgba(163,169,196,.28);width:0;}
+.rrow.pf .fill{background:transparent;border:2px dashed rgba(243,241,251,.55);}
+.rrow.hi .fill{background:linear-gradient(90deg,#FF9F3F,var(--sun));box-shadow:0 0 40px rgba(255,181,71,.45);}
+.fill .pct{position:absolute;right:-12px;top:50%;transform:translate(100%,-50%);font-family:var(--f-display);font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.rrow.hi .pct{color:var(--sun);}
+.dm{font-size:24px;color:var(--mute);margin-top:6px;}
+.dm b{color:var(--ink);}
+.side{display:flex;flex-direction:column;gap:22px;}
+.card{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:22px 30px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;flex-direction:column;gap:10px;}
+.card .t{font-family:var(--f-display);font-size:32px;font-weight:800;letter-spacing:-.3px;}
+.card p{font-size:23px;line-height:1.4;color:var(--mute);}
+.card p b{color:var(--ink);font-weight:600;}
+.card p.t{color:var(--ink);}
+
+/* slide 4 */
+.s4-grid{display:grid;grid-template-columns:1fr 470px;gap:56px;flex:1;min-height:0;}
+.kpis{display:flex;flex-direction:column;gap:22px;justify-content:center;}
+.kpi{border-left:4px solid var(--line);padding:6px 0 6px 26px;display:flex;flex-direction:column;gap:6px;}
+.kpi .v{font-family:var(--f-display);font-size:76px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+.kpi .k{font-size:23px;line-height:1.4;color:var(--mute);}
+.kpi.good{border-color:var(--charge);} .kpi.good .v{color:var(--charge);}
+.kpi.bad{border-color:var(--peak);} .kpi.bad .v{color:var(--peak);}
+.assume{font-family:var(--f-mono);font-size:19px;color:var(--faint);letter-spacing:.5px;}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 2.2s ease-out infinite;}
+@keyframes pulse{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.2);opacity:0}}
+
+/* slide 5 */
+.s5-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:80px;flex:1;min-height:0;align-items:center;}
+.take{display:flex;flex-direction:column;gap:30px;}
+.tk{display:grid;grid-template-columns:56px 1fr;gap:22px;align-items:start;}
+.tk .ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);}
+.tk h3{font-family:var(--f-display);font-size:36px;font-weight:800;margin:0 0 6px;letter-spacing:-.4px;}
+.tk p{font-size:24px;line-height:1.4;color:var(--mute);}
+.thanks{white-space:nowrap;font-family:var(--f-display);font-size:128px;font-weight:800;letter-spacing:-5px;line-height:.9;
+  background:linear-gradient(100deg,var(--ink) 20%,var(--sun) 50%,var(--peak) 70%,var(--ink) 90%);background-size:250% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 7s linear infinite;}
+@keyframes sheen{from{background-position:100% 0}to{background-position:-150% 0}}
+.btns{display:flex;gap:18px;flex-wrap:wrap;margin-top:34px;}
+.btn{display:inline-flex;align-items:center;gap:12px;padding:20px 30px;border-radius:999px;font-size:24px;font-weight:600;text-decoration:none;color:var(--night);background:var(--sun);box-shadow:0 0 40px rgba(255,181,71,.35);}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none;}
+.btn:focus-visible,.tool:focus-visible{outline:3px solid var(--charge);outline-offset:4px;}
+.foot{position:absolute;left:128px;right:128px;bottom:56px;font-size:19px;color:var(--faint);display:flex;justify-content:space-between;gap:24px;}
+
+/* chrome: progress, clock chip, tools, notes, timer */
+.progress{position:fixed;left:0;right:0;bottom:0;height:5px;display:flex;gap:4px;padding:0 max(0px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(0px,env(safe-area-inset-left,0px));z-index:5;}
+.progress span{flex:1;background:rgba(163,169,196,.18);position:relative;overflow:hidden;}
+.progress span::after{content:"";position:absolute;inset:0;background:var(--sun);transform:scaleX(0);transform-origin:left;transition:transform .6s ease;}
+.progress span.done::after{transform:scaleX(1);}
+.chip{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));font-family:var(--f-mono);font-size:13px;letter-spacing:1.5px;color:var(--mute);display:flex;gap:14px;align-items:center;z-index:5;transition:opacity .5s;}
+.chip .clock{color:var(--ink);}
+.tools{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));display:flex;gap:8px;z-index:6;transition:opacity .5s ease;}
+.tool{appearance:none;border:1px solid var(--line);background:rgba(9,13,28,.6);color:var(--ink);height:40px;min-width:40px;padding:0 12px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.tool:hover{border-color:var(--sun);}
+.tool kbd{font-family:var(--f-mono);font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:5px;padding:1px 5px;}
+.tool.primary{background:var(--sun);color:var(--night);border-color:var(--sun);}
+.tool.primary kbd{color:var(--night);border-color:rgba(9,13,28,.35);}
+.idle .tools,.idle .chip{opacity:0;}
+.idle.fs{cursor:none;}
+.timer{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));left:calc(18px + env(safe-area-inset-left,0px));font-family:var(--f-mono);font-size:28px;font-weight:600;padding:6px 16px;border-radius:12px;background:rgba(9,13,28,.6);border:1px solid var(--line);color:var(--charge);z-index:6;font-variant-numeric:tabular-nums;cursor:pointer;}
+.timer.warn{color:var(--sun);} .timer.over{color:var(--peak);border-color:var(--peak);}
+.notes{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(980px,calc(100% - 32px));max-height:40vh;overflow:auto;background:rgba(9,13,28,.9);border:1px solid var(--line);border-radius:16px;padding:18px 22px;font-size:16px;line-height:1.55;color:var(--ink);z-index:7;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.notes .h{font-family:var(--f-mono);font-size:12px;letter-spacing:1.5px;color:var(--sun);margin-bottom:6px;text-transform:uppercase;}
+.toast{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100% - 32px);background:rgba(9,13,28,.92);border:1px solid var(--sun);color:var(--ink);padding:12px 18px;border-radius:12px;font-size:14px;z-index:8;}
+.help{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,7,16,.7);z-index:9;padding:16px;}
+.help .box{background:var(--night);border:1px solid var(--line);border-radius:18px;padding:26px 30px;max-width:460px;width:100%;font-size:15px;line-height:1.5;}
+.help table{width:100%;border-collapse:collapse;margin-top:10px;}
+.help td{padding:6px 0;border-bottom:1px solid var(--line);color:var(--mute);}
+.help td:first-child{color:var(--ink);font-family:var(--f-mono);width:150px;}
+@media (prefers-reduced-motion: reduce){
+  .slide{transition:opacity .2s linear;filter:none;transform:none;}
+  .play [data-in]{animation:none;}
+  .pulse,.thanks{animation:none;}
+}
+</style>
+</head>
+<body>
+
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="viewport" id="vp">
+<main class="stage" id="stage" aria-live="polite">
+
+<!-- 1 · PROBLEM -->
+<section class="slide" data-clock="12:00" data-note="Spain has so much solar that midday power is often free, and sometimes negative, while the evening peak still costs over a hundred euros. A battery can buy at noon and sell at eight. My question: how much is that battery worth, and can machine learning make it earn more? (0:20)">
+  <p class="eyebrow" data-in>AI for Finance · Capstone · Spanish day-ahead market</p>
+  <h1 data-in style="--d:120ms">What is a grid battery worth in Spain?</h1>
+  <div class="s1-grid">
+    <div class="s1-left">
+      <div class="yearbox" data-in style="--d:260ms">
+        <div class="year" id="y1">2019</div>
+        <div class="spread"><div class="v" id="sp1">€13</div><div class="k">between the cheapest and the dearest hour of the average day</div></div>
+      </div>
+      <p class="lede" data-in style="--d:380ms">Solar now empties the middle of the day and leaves the evening peak standing. A 1&nbsp;MW / 2&nbsp;MWh battery earns that spread, if it knows tomorrow's prices in time.</p>
+      <p class="byline" data-in style="--d:480ms"><b>Wassim Ibrahim</b> · IE Master in Finance · December 2026</p>
+    </div>
+    <div class="chartcard" data-in style="--d:300ms">
+      <div class="cap"><span>Average price by hour of day, €/MWh</span><span class="mono" id="y1b">2019</span></div>
+      <svg id="c1" viewBox="0 0 700 470" width="100%" role="img" aria-label="Average Spanish day-ahead price by hour, changing from a flat profile in 2019 to a deep midday trough and evening peak in 2026"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · METHOD -->
+<section class="slide" data-clock="15:00" data-note="A battery has to commit its schedule at noon the day before, so it never sees tomorrow's prices. I use 104 thousand hourly prices from Red Eléctrica. Two models forecast tomorrow: LEAR, the benchmark in price forecasting, and LightGBM, plus their average. A linear programme turns each forecast into the optimal charge plan, and I settle it at the real prices. Everything is walk-forward: refitted monthly, tuned only on 2017 and 2018, tested on almost eight years. (0:30)">
+  <p class="eyebrow" data-in>Method · predict, then optimise</p>
+  <h2 data-in style="--d:100ms">Plan at noon the day before. Get paid at tomorrow's real prices.</h2>
+  <div class="pipe" data-in style="--d:220ms">
+    <svg class="flow" viewBox="0 0 1664 12" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="18" y1="6" x2="1300" y2="6" stroke="rgba(255,181,71,.25)" stroke-width="3"/>
+      <line id="flowline" x1="18" y1="6" x2="1300" y2="6" stroke="#FFB547" stroke-width="3" stroke-dasharray="10 26"/>
+    </svg>
+    <div class="node"><span class="dot">1</span><h3>Data</h3><p>104.328 hourly prices from Red Eléctrica, 2015 to 25 Nov 2026</p></div>
+    <div class="node"><span class="dot">2</span><h3>Forecast</h3><p>LEAR and LightGBM predict all 24 hours; the ensemble averages them</p></div>
+    <div class="node"><span class="dot">3</span><h3>Optimise</h3><p>A linear programme sets each hour's charge: 1&nbsp;MW, 2&nbsp;MWh, 87% round trip</p></div>
+    <div class="node"><span class="dot">4</span><h3>Settle</h3><p>The plan is paid at the prices that actually clear the next day</p></div>
+  </div>
+  <div class="s2-low">
+    <div class="chartcard" data-in style="--d:340ms">
+      <div class="cap"><span>One real day: 13 May 2025, €/MWh</span>
+        <span class="legend"><span><i style="background:#F3F1FB"></i>Realised</span><span><i style="background:repeating-linear-gradient(90deg,#FFB547 0 7px,transparent 7px 11px)"></i>Forecast at noon, 12 May</span><span><i style="background:#45E0B0;height:10px"></i>Charge</span><span><i style="background:#FF6B5A;height:10px"></i>Sell</span></span></div>
+      <svg id="c2" viewBox="0 0 1100 330" width="100%" role="img" aria-label="Forecast and realised prices on 13 May 2025 with the battery's charge and sell hours"></svg>
+    </div>
+    <div class="earn" data-in style="--d:460ms">
+      <div class="v tab" id="earn2">€246</div>
+      <p class="k">earned that day from the forecast plan, against <b>€263</b> with perfect foresight: <b class="c-charge">94%</b>.</p>
+      <p class="k">Walk-forward throughout: models refit monthly, tuned on 2017–18 only, tested 2019 to 25 Nov 2026.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · RESULTS -->
+<section class="slide" data-clock="19:00" data-note="Perfect foresight would have earned 252 thousand euros per megawatt. The ensemble earned 209 thousand, 83 percent. Yesterday's prices earn 74.5, a fixed clock schedule 65. The gain is significant against every alternative. Two surprises. Forecasting matters most when spreads are thin: before 2021 the naive strategy lost money. And a Q-learning agent with the same forecast was no better than the clock: with known physics, optimisation beats a learned policy. (0:30)">
+  <p class="eyebrow" data-in>Results · test 2019 to 25 Nov 2026 · 2.886 days</p>
+  <h2 data-in style="--d:100ms">The ensemble captures 83% of what perfect foresight earns</h2>
+  <div class="s3-grid">
+    <div class="race" data-in style="--d:200ms">
+      <div class="rrow pf"><div class="nm">Perfect foresight<small>€251.595 per MW</small></div><div class="track"><div class="fill" data-v="100"><span class="pct">100%</span></div></div></div>
+      <div class="rrow hi"><div class="nm">Ensemble forecast + optimiser<small>€209.204 per MW</small></div><div class="track"><div class="fill" data-v="83.2"><span class="pct">83,2%</span></div></div></div>
+      <div class="rrow"><div class="nm">LEAR forecast + optimiser<small>€205.042</small></div><div class="track"><div class="fill" data-v="81.5"><span class="pct">81,5%</span></div></div></div>
+      <div class="rrow"><div class="nm">Yesterday's prices + optimiser<small>€187.492</small></div><div class="track"><div class="fill" data-v="74.5"><span class="pct">74,5%</span></div></div></div>
+      <div class="rrow"><div class="nm">Fixed clock schedule<small>€164.119</small></div><div class="track"><div class="fill" data-v="65.2"><span class="pct">65,2%</span></div></div></div>
+      <p class="dm">Significant against every alternative: Diebold–Mariano <b>t = 3,8 to 13,6</b> on daily profit; <b>+€7,52 a day</b> over yesterday's prices.</p>
+    </div>
+    <div class="side">
+      <div class="card" data-in style="--d:360ms">
+        <p class="t">Worth most when spreads are thin</p>
+        <svg id="c3" viewBox="0 0 640 280" width="100%" role="img" aria-label="Capture by regime: ensemble 47, 65 and 89 percent; yesterday's prices minus 50, 55 and 81 percent"></svg>
+        <p><span class="c-sun">■</span> Ensemble &nbsp; <span style="color:#7E86A8">■</span> Yesterday's prices. Before 2021 the naive plan lost money.</p>
+      </div>
+      <div class="card" data-in style="--d:480ms">
+        <p class="t">Reinforcement learning loses to optimisation</p>
+        <p>Q-learning with the same forecast, 2024–26: <b>77%</b>, level with the clock schedule (78%). The optimiser reaches <b class="c-charge">90%</b>. When the physics is known, solve it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · VALUE -->
+<section class="slide" data-clock="21:00" data-note="Then I turned the backtest into an investment rule. Five thousand fifteen-year paths, with fade and spread compression, give a break-even cost of 143 to 183 euros per kWh at a 10 percent cost of capital. At today's lowest costs, around 120, the return is 14 to 22 percent. At typical European costs around 200, it does not clear. (0:25)">
+  <p class="eyebrow" data-in>Valuation · from backtest to investment rule</p>
+  <h2 data-in style="--d:100ms">Arbitrage alone pays for a battery below €143–183 per kWh</h2>
+  <div class="s4-grid">
+    <div class="chartcard" data-in style="--d:220ms">
+      <div class="cap"><span>Median NPV per MW at 10% WACC, k€, by installed cost</span><span class="mono">5.000 paths each</span></div>
+      <svg id="c4" viewBox="0 0 1100 560" width="100%" role="img" aria-label="NPV falls linearly with installed cost and crosses zero at 143 euros per kWh on 2023 to 2026 spreads and 183 euros on 2025 to 2026 spreads"></svg>
+    </div>
+    <div class="kpis">
+      <div class="kpi good" data-in style="--d:360ms"><div class="v">14–22%</div><div class="k">IRR at €120/kWh, close to today's lowest all-in global cost (Ember, 2025)</div></div>
+      <div class="kpi bad" data-in style="--d:460ms"><div class="v">3–8%</div><div class="k">IRR at €200/kWh, a typical European 2-hour cost: below the 10% hurdle</div></div>
+      <div class="kpi" data-in style="--d:560ms"><div class="v">€55k</div><div class="k">Median year-1 gross margin per MW on 2023–26 prices; €71k on 2025–26</div></div>
+      <p class="assume" data-in style="--d:640ms">15 years · 2% fade a year · O&amp;M 2% of capex · spreads compress 3% a year</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · CLOSE -->
+<section class="slide" data-clock="23:00" data-note="So the edge is buying the hardware cheaply and stacking revenues on top of arbitrage. The main risk is that batteries like mine compress the very spread they trade. Everything is reproducible in Colab. Thank you. [If under 1:40: open the screener, move capex from 200 to 120.] (0:15)">
+  <p class="eyebrow" data-in>Conclusion · implementation risks</p>
+  <div class="s5-wrap">
+    <div class="take">
+      <h2 data-in style="--d:80ms">Buy the hardware cheap. Stack the revenues.</h2>
+      <div class="tk" data-in style="--d:220ms"><div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFB547" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-6 4 3 7-9"/><path d="M15 5h4v4"/></svg></div><div><h3>Forecasts pay when they rank hours well</h3><p>The ensemble beats simple rules by €7,52 a day, and most of all when spreads are thin.</p></div></div>
+      <div class="tk" data-in style="--d:340ms"><div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#45E0B0" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/><path d="M7 10v4M11 10v4"/></svg></div><div><h3>Not yet in the model: more revenue</h3><p>Ancillary services, Spain's coming capacity market with contracts of up to 15 years, intraday re-trading.</p></div></div>
+      <div class="tk" data-in style="--d:460ms"><div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF6B5A" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg></div><div><h3>The main risk is the battery's own success</h3><p>Every new battery lifts the trough and flattens the peak it trades. Add warranty cycle caps and price impact.</p></div></div>
+    </div>
+    <div data-in style="--d:560ms">
+      <div class="thanks">Thank you</div>
+      <div class="btns">
+        <a class="btn" href="https://claude.ai/artifact/8RnaiqFJay1vJEuTB5kJt2" target="_blank" rel="noopener">Open the battery screener <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+        <span class="btn ghost">Code: Colab + GitHub, every number reproducible</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Data: Red Eléctrica (REE) day-ahead prices · Capex: Ember (Dec 2025), BNEF (2024)</span><span>Generative AI (Claude) used for coding and drafting, disclosed in the manuscript</span></div>
+</section>
+
+</main>
+</div>
+
+<div class="chip" id="chip" aria-hidden="true"><span>MARKET DAY</span><span class="clock" id="clock">12:00</span><span id="count">1 / 5</span></div>
+<div class="tools" id="tools">
+  <button class="tool" id="bNotes" type="button" title="Speaker notes (N)">Notes <kbd>N</kbd></button>
+  <button class="tool" id="bTimer" type="button" title="Two-minute timer (T)">Timer <kbd>T</kbd></button>
+  <button class="tool" id="bHelp" type="button" title="Keys (?)" aria-label="Keyboard shortcuts">?</button>
+  <button class="tool primary" id="bFs" type="button" title="Fullscreen (F)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path id="fsIcon" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="fsLabel">Fullscreen</span> <kbd>F</kbd></button>
+</div>
+<div class="timer" id="timer" hidden title="Click to restart">2:00</div>
+<div class="notes" id="notes" hidden><div class="h" id="notesH">Slide 1 · notes</div><div id="notesT"></div></div>
+<div class="toast" id="toast" hidden></div>
+<div class="help" id="help" hidden><div class="box"><b style="font-family:var(--f-display);font-size:22px">Presenting keys</b>
+<table><tr><td>→ Space PgDn</td><td>Next slide (or click)</td></tr><tr><td>← PgUp</td><td>Previous slide</td></tr><tr><td>F</td><td>Fullscreen on or off</td></tr><tr><td>N</td><td>Speaker notes</td></tr><tr><td>T</td><td>Two-minute countdown; click it to restart</td></tr><tr><td>R</td><td>Replay this slide's animation</td></tr><tr><td>1–5</td><td>Jump to a slide</td></tr></table>
+<p style="margin-top:12px;color:var(--mute)">Press any key to close.</p></div></div>
+<div class="progress" id="prog"><span></span><span></span><span></span><span></span><span></span></div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const NS="http://www.w3.org/2000/svg";
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const eu=(n,d=0)=>n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+
+/* ---------- data (from the capstone pipeline) ---------- */
+const PROFILES=[
+ ['2019',[47.6,44.5,42.1,40.9,40.5,41.6,44.2,48.0,50.0,51.2,50.8,50.1,49.8,49.4,47.7,46.2,45.9,47.5,49.6,51.6,52.7,53.2,51.1,48.2]],
+ ['2021',[113.0,105.9,100.9,97.5,96.1,99.5,107.4,116.8,121.3,120.1,115.1,110.4,108.6,106.8,103.9,100.3,102.1,110.8,120.1,128.6,132.5,130.2,123.3,115.0]],
+ ['2023',[94.6,87.6,83.4,81.1,79.6,82.5,91.2,101.6,104.3,92.7,79.0,71.1,67.9,65.2,62.2,60.3,64.7,76.3,89.9,107.7,119.5,118.3,109.7,100.1]],
+ ['2025',[79.9,72.1,68.0,65.0,63.7,66.5,74.7,87.4,85.3,63.0,44.3,34.5,30.8,28.4,27.3,29.3,36.5,50.2,68.0,90.0,105.5,110.5,99.8,86.2]],
+ ['2026',[119.3,112.2,107.4,104.2,102.9,105.5,114.5,125.5,115.5,81.7,50.7,33.7,27.8,26.0,27.3,29.6,38.6,58.0,85.9,121.1,144.6,149.2,137.5,123.8]]
+];
+const DAY={actual:[67.0,45.0,37.8,35.0,35.0,39.8,70.0,108.1,68.2,25.6,1.2,0.0,-0.5,-2.5,-2.1,0.0,0.0,0.6,24.7,33.6,92.7,128.1,112.3,74.6],
+ fc:[52.9,48.6,47.7,45.3,45.7,48.7,56.5,71.0,58.8,39.2,22.1,17.6,17.3,15.2,15.9,14.9,14.3,14.6,18.7,38.4,75.3,104.3,92.0,75.3],
+ c:[0,0,0,1,.149,0,0,0,0,0,0,0,0,0,0,.144,1,1,0,0,0,0,0,0],
+ d:[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,.865,0]};
+const REG=[['2019–20',46.9,-49.5],['2021–22',65.1,55.0],['2023–26',88.7,81.4]];
+const SLOPE=-2.3048; /* k€ of NPV per €/kWh of capex, 2 MWh per MW */
+const BE=[{be:143.17,lab:'2023–26 spreads',col:'#FFB547'},{be:183.17,lab:'2025–26 spreads',col:'#45E0B0'}];
+
+/* ---------- animation runtime ---------- */
+let token=0;
+const sleep=(ms,tk)=>new Promise((res,rej)=>setTimeout(()=>tk===token?res():rej('x'),reduce?0:ms));
+function tween(ms,fn,tk){return new Promise((res,rej)=>{if(reduce||ms<=0){fn(1);return res();}const t0=performance.now();
+  (function step(now){if(tk!==token)return rej('x');const t=Math.min(1,(now-t0)/ms);fn(t);t<1?requestAnimationFrame(step):res();})(t0);});}
+const smooth=pts=>{let d=`M${pts[0][0]},${pts[0][1]}`;for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+  d+=` C${p1[0]+(p2[0]-p0[0])/6},${p1[1]+(p2[1]-p0[1])/6} ${p2[0]-(p3[0]-p1[0])/6},${p2[1]-(p3[1]-p1[1])/6} ${p2[0]},${p2[1]}`;}return d;};
+
+/* ---------- chart 1: the duck curve forms ---------- */
+const C1={W:700,H:470,l:58,r:14,t:16,b:44,max:160};
+C1.x=h=>C1.l+h*(C1.W-C1.l-C1.r)/23; C1.y=v=>C1.H-C1.b-v/C1.max*(C1.H-C1.t-C1.b);
+(function build1(){const s=$('#c1');
+  const defs=el('defs',{},s);const g=el('linearGradient',{id:'g1',x1:0,y1:0,x2:0,y2:1},defs);
+  el('stop',{offset:'0%','stop-color':'#FFB547','stop-opacity':.42},g);el('stop',{offset:'100%','stop-color':'#FFB547','stop-opacity':0},g);
+  [0,40,80,120,160].forEach(v=>{el('line',{x1:C1.l,x2:C1.W-C1.r,y1:C1.y(v),y2:C1.y(v),stroke:'rgba(163,169,196,.14)'},s);
+    const t=el('text',{x:C1.l-12,y:C1.y(v)+6,'text-anchor':'end','font-size':17,fill:'#7E86A8'},s);t.textContent=v;});
+  [0,6,12,18,23].forEach(h=>{const t=el('text',{x:C1.x(h),y:C1.H-12,'text-anchor':h===23?'end':h===0?'start':'middle','font-size':17,fill:'#7E86A8'},s);t.textContent=String(h).padStart(2,'0')+':00';});
+  const b1=el('g',{class:'band hide',id:'bandBuy'},s);
+  el('rect',{x:C1.x(10.5),y:C1.t,width:C1.x(16.5)-C1.x(10.5),height:C1.H-C1.t-C1.b,fill:'rgba(69,224,176,.12)',rx:8},b1);
+  const tb=el('text',{x:(C1.x(10.5)+C1.x(16.5))/2,y:C1.H-C1.b-14,'text-anchor':'middle','font-size':18,'font-weight':600,fill:'#45E0B0'},b1);tb.textContent='CHARGE';
+  const b2=el('g',{class:'band hide',id:'bandSell'},s);
+  el('rect',{x:C1.x(18.5),y:C1.t,width:C1.x(22.5)-C1.x(18.5),height:C1.H-C1.t-C1.b,fill:'rgba(255,107,90,.13)',rx:8},b2);
+  const ts=el('text',{x:(C1.x(18.5)+C1.x(22.5))/2,y:C1.H-C1.b-14,'text-anchor':'middle','font-size':18,'font-weight':600,fill:'#FF6B5A'},b2);ts.textContent='SELL';
+  el('path',{id:'a1',fill:'url(#g1)'},s);
+  el('path',{id:'l1',fill:'none',stroke:'#FFB547','stroke-width':5,'stroke-linecap':'round',style:'filter:drop-shadow(0 0 10px rgba(255,181,71,.6))'},s);
+  el('circle',{id:'lo1',r:8,fill:'#45E0B0',stroke:'#090D1C','stroke-width':3},s);
+  el('circle',{id:'hi1',r:8,fill:'#FF6B5A',stroke:'#090D1C','stroke-width':3},s);
+})();
+function draw1(vals,label){
+  const pts=vals.map((v,h)=>[C1.x(h),C1.y(v)]);const d=smooth(pts);
+  $('#l1').setAttribute('d',d);
+  $('#a1').setAttribute('d',d+` L${C1.x(23)},${C1.y(0)} L${C1.x(0)},${C1.y(0)} Z`);
+  let lo=0,hi=0;vals.forEach((v,i)=>{if(v<vals[lo])lo=i;if(v>vals[hi])hi=i;});
+  $('#lo1').setAttribute('cx',pts[lo][0]);$('#lo1').setAttribute('cy',pts[lo][1]);
+  $('#hi1').setAttribute('cx',pts[hi][0]);$('#hi1').setAttribute('cy',pts[hi][1]);
+  $('#sp1').textContent='€'+eu(Math.round(vals[hi]-vals[lo]));
+  if(label){$('#y1').textContent=label;$('#y1b').textContent=label;}
+}
+async function enter1(tk){
+  $('#bandBuy').classList.add('hide');$('#bandSell').classList.add('hide');
+  if(reduce){draw1(PROFILES[4][1],'2026');$('#bandBuy').classList.remove('hide');$('#bandSell').classList.remove('hide');return;}
+  draw1(PROFILES[0][1],'2019');
+  await sleep(900,tk);
+  for(let k=1;k<PROFILES.length;k++){
+    const A=PROFILES[k-1][1],B=PROFILES[k][1];
+    await tween(1100,t=>{const e=ease(t);draw1(A.map((a,i)=>a+(B[i]-a)*e),t>.5?PROFILES[k][0]:PROFILES[k-1][0]);},tk);
+    await sleep(k===PROFILES.length-1?0:380,tk);
+  }
+  $('#bandBuy').classList.remove('hide');await sleep(260,tk);$('#bandSell').classList.remove('hide');
+}
+
+/* ---------- chart 2: one real day ---------- */
+const C2={W:1100,H:330,l:74,r:12,t:12,b:118,min:-10,max:135};
+C2.x=h=>C2.l+(h+.5)*(C2.W-C2.l-C2.r)/24; C2.y=v=>C2.t+(C2.max-v)/(C2.max-C2.min)*(C2.H-C2.t-C2.b);
+(function build2(){const s=$('#c2');const defs=el('defs',{},s);
+  const cp=el('clipPath',{id:'clip2'},defs);el('rect',{id:'clipR2',x:0,y:0,width:0,height:C2.H},cp);
+  [0,50,100].forEach(v=>{el('line',{x1:C2.l,x2:C2.W-C2.r,y1:C2.y(v),y2:C2.y(v),stroke:v===0?'rgba(163,169,196,.35)':'rgba(163,169,196,.14)'},s);
+    const t=el('text',{x:C2.l-10,y:C2.y(v)+6,'text-anchor':'end','font-size':16,fill:'#7E86A8'},s);t.textContent=v;});
+  const g=el('g',{'clip-path':'url(#clip2)'},s);
+  el('path',{d:smooth(DAY.fc.map((v,h)=>[C2.x(h),C2.y(v)])),fill:'none',stroke:'#FFB547','stroke-width':4,'stroke-dasharray':'12 9','stroke-linecap':'round'},g);
+  el('path',{d:smooth(DAY.actual.map((v,h)=>[C2.x(h),C2.y(v)])),fill:'none',stroke:'#F3F1FB','stroke-width':4,'stroke-linecap':'round',style:'filter:drop-shadow(0 0 6px rgba(243,241,251,.45))'},g);
+  /* schedule strip */
+  const base=C2.H-58,bw=(C2.W-C2.l-C2.r)/24-8,hmax=40;
+  el('line',{x1:C2.l,x2:C2.W-C2.r,y1:base,y2:base,stroke:'rgba(163,169,196,.3)'},s);
+  const ts=el('text',{x:C2.l-10,y:base-14,'text-anchor':'end','font-size':14,fill:'#FF6B5A'},s);ts.textContent='sell';
+  const tc=el('text',{x:C2.l-10,y:base+26,'text-anchor':'end','font-size':14,fill:'#45E0B0'},s);tc.textContent='charge';
+  for(let h=0;h<24;h++){
+    const x=C2.x(h)-bw/2;
+    if(DAY.d[h]>0)el('rect',{class:'sched',x,y:base-DAY.d[h]*hmax,width:bw,height:DAY.d[h]*hmax,rx:4,fill:'#FF6B5A','data-h':h,style:'transform-box:fill-box;transform-origin:bottom;'},s);
+    if(DAY.c[h]>0)el('rect',{class:'sched',x,y:base,width:bw,height:DAY.c[h]*hmax,rx:4,fill:'#45E0B0','data-h':h,style:'transform-box:fill-box;transform-origin:top;'},s);
+  }
+  [0,6,12,18,23].forEach(h=>{const t=el('text',{x:C2.x(h),y:C2.H-4,'text-anchor':h===23?'end':'middle','font-size':15,fill:'#7E86A8'},s);t.textContent=String(h).padStart(2,'0')+':00';});
+})();
+async function enter2(tk){
+  const R=$('#clipR2'),bars=[...document.querySelectorAll('#c2 .sched')];
+  const fl=$('#flowline');
+  const setBars=p=>bars.forEach(b=>{const h=+b.dataset.h;const local=Math.max(0,Math.min(1,(p*26-h)/2));b.style.transform=`scaleY(${easeOut(local)})`;});
+  if(reduce){R.setAttribute('width',C2.W);setBars(1);$('#earn2').textContent='€246';return;}
+  R.setAttribute('width',0);setBars(0);$('#earn2').textContent='€0';
+  flowRun(tk);
+  await sleep(600,tk);
+  await tween(1700,t=>R.setAttribute('width',C2.l+easeOut(t)*(C2.W-C2.l)),tk);
+  await tween(1300,t=>{setBars(t);$('#earn2').textContent='€'+eu(Math.round(246*easeOut(t)));},tk);
+}
+function flowRun(tk){const fl=$('#flowline');let off=0;(function f(){if(tk!==token||reduce)return;off-=1.2;fl.setAttribute('stroke-dashoffset',off);requestAnimationFrame(f);})();}
+
+/* ---------- chart 3: regimes ---------- */
+const C3={W:640,H:280,l:16,r:16,t:30,b:30,min:-75,max:100};
+C3.y=v=>C3.t+(C3.max-v)/(C3.max-C3.min)*(C3.H-C3.t-C3.b);
+(function build3(){const s=$('#c3');const z=C3.y(0);
+  el('line',{x1:C3.l,x2:C3.W-C3.r,y1:z,y2:z,stroke:'rgba(163,169,196,.4)'},s);
+  const gw=(C3.W-C3.l-C3.r)/3,bw=62;
+  REG.forEach((r,i)=>{const cx=C3.l+gw*i+gw/2;
+    [[r[1],'#FFB547',-bw/2-6],[r[2],'#7E86A8',bw/2+6]].forEach(([v,col,dx])=>{
+      const y=Math.min(C3.y(v),z),h=Math.abs(C3.y(v)-z);
+      el('rect',{class:'rb',x:cx+dx-bw/2,y,width:bw,height:h,rx:5,fill:col,style:`transform-box:fill-box;transform-origin:${v>=0?'bottom':'top'};`},s);
+      const t=el('text',{x:cx+dx,y:v>=0?C3.y(v)-9:C3.y(v)+22,'text-anchor':'middle','font-size':19,'font-weight':600,fill:v<0?'#FF6B5A':(col==='#FFB547'?'#FFB547':'#C9CDE0')},s);
+      t.textContent=(v>0?'':'−')+eu(Math.round(Math.abs(v)))+'%';t.setAttribute('class','rl');});
+    const lab=el('text',{x:cx,y:C3.H-4,'text-anchor':'middle','font-size':18,fill:'#A3A9C4'},s);lab.textContent=r[0];});
+})();
+async function enter3(tk){
+  const fills=[...document.querySelectorAll('.rrow .fill')],max=Math.max(200,fills[0].parentNode.offsetWidth-130);
+  const rb=[...document.querySelectorAll('#c3 .rb')],rl=[...document.querySelectorAll('#c3 .rl')];
+  const set=p=>{fills.forEach((f,i)=>{const v=+f.dataset.v;const local=Math.max(0,Math.min(1,p*1.4-i*.1));const e=easeOut(local);
+      f.style.width=(v/100*max*e)+'px';f.querySelector('.pct').textContent=eu(v*e,v===100?0:1)+'%';});};
+  const setR=p=>{rb.forEach((b,i)=>{const local=Math.max(0,Math.min(1,p*1.6-i*.1));b.style.transform=`scaleY(${easeOut(local)})`;});rl.forEach(t=>t.style.opacity=p>.85?1:0);};
+  if(reduce){set(1);setR(1);return;}
+  set(0);setR(0);
+  await sleep(500,tk);
+  await tween(1900,set,tk);
+  await tween(1200,setR,tk);
+}
+
+/* ---------- chart 4: NPV vs capex ---------- */
+const C4={W:1100,H:560,l:78,r:24,t:40,b:56,x0:100,x1:260,y0:-220,y1:260};
+C4.x=c=>C4.l+(c-C4.x0)/(C4.x1-C4.x0)*(C4.W-C4.l-C4.r); C4.y=v=>C4.t+(C4.y1-v)/(C4.y1-C4.y0)*(C4.H-C4.t-C4.b);
+(function build4(){const s=$('#c4');const defs=el('defs',{},s);
+  const cp=el('clipPath',{id:'clip4'},defs);el('rect',{id:'clipR4',x:0,y:0,width:0,height:C4.H},cp);
+  [-200,-100,0,100,200].forEach(v=>{el('line',{x1:C4.l,x2:C4.W-C4.r,y1:C4.y(v),y2:C4.y(v),stroke:v===0?'rgba(243,241,251,.55)':'rgba(163,169,196,.13)','stroke-width':v===0?2:1},s);
+    const t=el('text',{x:C4.l-12,y:C4.y(v)+6,'text-anchor':'end','font-size':17,fill:v===0?'#F3F1FB':'#7E86A8'},s);t.textContent=(v>0?'+':v<0?'−':'')+eu(Math.abs(v));});
+  [100,140,180,220,260].forEach(c=>{const t=el('text',{x:C4.x(c),y:C4.H-18,'text-anchor':'middle','font-size':17,fill:'#7E86A8'},s);t.textContent='€'+c;});
+  /* reference costs */
+  [[120,'€120 · lowest global (Ember)'],[200,'€200 · typical Europe']].forEach(([c,l],i)=>{
+    el('line',{x1:C4.x(c),x2:C4.x(c),y1:C4.t,y2:C4.H-C4.b,stroke:'rgba(243,241,251,.35)','stroke-dasharray':'4 7'},s);
+    const t=el('text',{x:C4.x(c)+10,y:C4.t+4,'text-anchor':'start','font-size':16,fill:'#C9CDE0'},s);t.textContent=l;});
+  /* break-even band */
+  el('rect',{id:'beBand',x:C4.x(143.17),y:C4.t+16,width:C4.x(183.17)-C4.x(143.17),height:C4.H-C4.t-C4.b-16,fill:'rgba(255,181,71,.08)',opacity:0,style:'transition:opacity .8s'},s);
+  const g=el('g',{'clip-path':'url(#clip4)'},s);
+  BE.forEach(b=>{const p=c=>[C4.x(c),C4.y(SLOPE*(c-b.be))];
+    const A=p(C4.x0),B=p(b.be),Cc=p(C4.x1),Z=C4.y(0);
+    el('path',{d:`M${A[0]},${A[1]} L${B[0]},${B[1]} L${B[0]},${Z} L${A[0]},${Z} Z`,fill:'rgba(69,224,176,.10)'},g);
+    el('path',{d:`M${B[0]},${B[1]} L${Cc[0]},${Cc[1]} L${Cc[0]},${Z} Z`,fill:'rgba(255,107,90,.08)'},g);
+    el('line',{x1:A[0],y1:A[1],x2:Cc[0],y2:Cc[1],stroke:b.col,'stroke-width':5,'stroke-linecap':'round',style:`filter:drop-shadow(0 0 8px ${b.col}88)`},g);
+    const lc=b.be<150?106:196,ang=Math.atan2(C4.y(SLOPE)-C4.y(0),C4.x(1)-C4.x(0))*180/Math.PI;
+    const lx=C4.x(lc),ly=C4.y(SLOPE*(lc-b.be))-14;
+    const t=el('text',{x:lx,y:ly,'font-size':19,'font-weight':600,fill:b.col,transform:`rotate(${ang} ${lx} ${ly})`},g);t.textContent=b.lab;
+  });
+  BE.forEach((b,i)=>{const gg=el('g',{class:'beM',opacity:0,style:'transition:opacity .6s'},s);
+    el('circle',{cx:C4.x(b.be),cy:C4.y(0),r:11,fill:b.col,class:'pulse'},gg);
+    el('circle',{cx:C4.x(b.be),cy:C4.y(0),r:10,fill:b.col,stroke:'#090D1C','stroke-width':3},gg);
+    const t=el('text',{x:C4.x(b.be),y:C4.y(0)+44,'text-anchor':'middle','font-family':'Bricolage Grotesque, sans-serif','font-size':34,'font-weight':800,fill:b.col},gg);t.textContent='€'+Math.round(b.be);});
+  const nt=el('text',{x:C4.x(258),y:C4.y(0)-14,'text-anchor':'end','font-size':15,fill:'#F3F1FB',opacity:.75},s);nt.textContent='NPV = 0';
+})();
+async function enter4(tk){
+  const R=$('#clipR4'),m=[...document.querySelectorAll('.beM')],band=$('#beBand');
+  if(reduce){R.setAttribute('width',C4.W);m.forEach(x=>x.setAttribute('opacity',1));band.setAttribute('opacity',1);return;}
+  R.setAttribute('width',0);m.forEach(x=>x.setAttribute('opacity',0));band.setAttribute('opacity',0);
+  await sleep(500,tk);
+  await tween(1700,t=>R.setAttribute('width',C4.l+easeOut(t)*(C4.W-C4.l)),tk);
+  m[0].setAttribute('opacity',1);await sleep(300,tk);m[1].setAttribute('opacity',1);await sleep(200,tk);band.setAttribute('opacity',1);
+}
+const ENTER=[enter1,enter2,enter3,enter4,async()=>{}];
+
+/* ---------- sky: noon to night ---------- */
+const SKY=[ /* top, bottom, glow colour, glow x, glow y, glow strength, stars */
+ {top:[16,34,74],bot:[9,13,28],gc:[255,181,71],gx:.70,gy:-.05,gs:.55,st:0},
+ {top:[22,28,70],bot:[9,13,28],gc:[255,170,80],gx:.92,gy:.10,gs:.42,st:0},
+ {top:[30,20,64],bot:[40,18,40],gc:[255,107,90],gx:.85,gy:1.05,gs:.55,st:.25},
+ {top:[13,14,40],bot:[22,14,34],gc:[255,107,90],gx:.20,gy:1.15,gs:.28,st:.6},
+ {top:[6,9,24],bot:[10,14,32],gc:[150,170,255],gx:.82,gy:.12,gs:.18,st:1}];
+const cv=$('#sky'),cx=cv.getContext('2d');let W=0,H=0,dpr=1;
+let skyFrom=SKY[0],skyTo=SKY[0],skyT=1,skyT0=0;
+const stars=[...Array(220)].map(()=>({x:Math.random(),y:Math.random()*.8,r:Math.random()*1.3+.3,p:Math.random()*6.28}));
+const motes=[...Array(70)].map(()=>({x:Math.random(),y:Math.random(),v:.00015+Math.random()*.0004,r:Math.random()*2+.6,p:Math.random()*6.28}));
+function resize(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);
+  const s=Math.min(W/1920,H/1080);$('#stage').style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',resize);resize();
+const lerp=(a,b,t)=>a+(b-a)*t,lc=(a,b,t)=>a.map((v,i)=>Math.round(lerp(v,b[i],t)));
+function frame(now){
+  const t=reduce?1:ease(Math.min(1,(now-skyT0)/1400));const a=skyFrom,b=skyTo;
+  const top=lc(a.top,b.top,t),bot=lc(a.bot,b.bot,t),gc=lc(a.gc,b.gc,t);
+  const gx=lerp(a.gx,b.gx,t)*W,gy=lerp(a.gy,b.gy,t)*H,gs=lerp(a.gs,b.gs,t),st=lerp(a.st,b.st,t);
+  const lg=cx.createLinearGradient(0,0,0,H);lg.addColorStop(0,`rgb(${top})`);lg.addColorStop(1,`rgb(${bot})`);cx.fillStyle=lg;cx.fillRect(0,0,W,H);
+  const R=Math.max(W,H)*.75;const rg=cx.createRadialGradient(gx,gy,0,gx,gy,R);
+  rg.addColorStop(0,`rgba(${gc},${gs})`);rg.addColorStop(.35,`rgba(${gc},${gs*.28})`);rg.addColorStop(1,`rgba(${gc},0)`);cx.fillStyle=rg;cx.fillRect(0,0,W,H);
+  if(st>0.01){for(const s of stars){const tw=reduce?1:.55+.45*Math.sin(now/900+s.p);cx.globalAlpha=st*tw*.9;cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x*W,s.y*H,s.r,0,6.28);cx.fill();}cx.globalAlpha=1;}
+  const mc=lc([69,224,176],[255,140,100],Math.min(1,(cur)/3));
+  for(const m of motes){if(!reduce){m.y-=m.v;if(m.y<-.02){m.y=1.02;m.x=Math.random();}}
+    const x=m.x*W+Math.sin(now/2000+m.p)*14;cx.globalAlpha=.10+.22*(.5+.5*Math.sin(now/700+m.p));cx.fillStyle=`rgb(${mc})`;cx.beginPath();cx.arc(x,m.y*H,m.r,0,6.28);cx.fill();}
+  cx.globalAlpha=1;
+  if(!reduce||t<1)requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- navigation ---------- */
+const slides=[...document.querySelectorAll('.slide')];let cur=-1;
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));if(i===cur)return;
+  token++;const tk=token;
+  slides.forEach((s,k)=>{s.classList.toggle('on',k===i);if(k!==i)s.classList.remove('play');});
+  const s=slides[i];s.classList.remove('play');void s.offsetWidth;s.classList.add('play');
+  skyFrom=cur<0?SKY[i]:SKY[cur];skyTo=SKY[i];skyT0=performance.now();if(reduce)requestAnimationFrame(frame);
+  cur=i;
+  document.querySelectorAll('#prog span').forEach((p,k)=>p.classList.toggle('done',k<=i));
+  $('#clock').textContent=s.dataset.clock;$('#count').textContent=(i+1)+' / '+slides.length;
+  $('#notesH').textContent='Slide '+(i+1)+' · notes';$('#notesT').textContent=s.dataset.note;
+  try{history.replaceState(null,'','#s'+(i+1));}catch(e){}
+  ENTER[i](tk).catch(()=>{});
+}
+function replay(){const i=cur;cur=-2;skyFrom=SKY[i];go(i);}
+
+/* fullscreen */
+function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,4200);}
+function toggleFs(){
+  const d=document.documentElement;
+  if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return;}
+  const req=d.requestFullscreen||d.webkitRequestFullscreen;
+  if(!req){toast('Fullscreen is not available here. Press F11 (Windows) or Ctrl+Cmd+F (Mac).');return;}
+  try{const p=req.call(d,{navigationUI:'hide'});if(p&&p.catch)p.catch(()=>toast('This view blocked fullscreen. Open the downloaded deck file in Chrome and press F, or press F11 / Ctrl+Cmd+F.'));}
+  catch(e){toast('This view blocked fullscreen. Open the downloaded deck file in Chrome and press F.');}
+}
+function fsUi(){const on=isFs();document.body.classList.toggle('fs',on);$('#fsLabel').textContent=on?'Exit':'Fullscreen';
+  $('#fsIcon').setAttribute('d',on?'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5':'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5');}
+document.addEventListener('fullscreenchange',fsUi);document.addEventListener('webkitfullscreenchange',fsUi);
+
+/* timer */
+let tStart=0,tRun=false;
+function tick(){if(!tRun)return;const left=120-(performance.now()-tStart)/1000;const a=Math.abs(left);
+  const m=Math.floor(a/60),s=Math.floor(a%60);const el=$('#timer');el.textContent=(left<0?'+':'')+m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('warn',left<=20&&left>0);el.classList.toggle('over',left<=0);setTimeout(tick,200);}
+function toggleTimer(){const el=$('#timer');if(el.hidden){el.hidden=false;if(!tRun){tStart=performance.now();tRun=true;tick();}}else el.hidden=true;}
+$('#timer').addEventListener('click',e=>{e.stopPropagation();tStart=performance.now();if(!tRun){tRun=true;tick();}});
+
+const toggleNotes=()=>{$('#notes').hidden=!$('#notes').hidden;};
+const toggleHelp=()=>{$('#help').hidden=!$('#help').hidden;};
+$('#bFs').addEventListener('click',e=>{e.stopPropagation();toggleFs();});
+$('#bNotes').addEventListener('click',e=>{e.stopPropagation();toggleNotes();});
+$('#bTimer').addEventListener('click',e=>{e.stopPropagation();toggleTimer();});
+$('#bHelp').addEventListener('click',e=>{e.stopPropagation();toggleHelp();});
+$('#help').addEventListener('click',e=>{e.stopPropagation();$('#help').hidden=true;});
+$('#notes').addEventListener('click',e=>e.stopPropagation());
+
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(!$('#help').hidden){$('#help').hidden=true;e.preventDefault();return;}
+  const k=e.key;
+  if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(k)){e.preventDefault();go(cur+1);}
+  else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(k)){e.preventDefault();go(cur-1);}
+  else if(k==='Home')go(0);else if(k==='End')go(slides.length-1);
+  else if(k==='f'||k==='F'){e.preventDefault();toggleFs();}
+  else if(k==='n'||k==='N')toggleNotes();
+  else if(k==='t'||k==='T')toggleTimer();
+  else if(k==='r'||k==='R')replay();
+  else if(k==='?'||k==='h'||k==='H')toggleHelp();
+  else if(/^[1-5]$/.test(k))go(+k-1);
+  wake();
+});
+$('#vp').addEventListener('click',e=>{if(e.target.closest('a,button'))return;go(e.clientX<innerWidth*.22?cur-1:cur+1);});
+let tx=null;addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+addEventListener('touchend',e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(cur+(dx<0?1:-1));tx=null;},{passive:true});
+
+/* chrome fades when idle */
+let idleT;function wake(){document.body.classList.remove('idle');clearTimeout(idleT);idleT=setTimeout(()=>document.body.classList.add('idle'),2600);}
+addEventListener('mousemove',wake);wake();
+
+const h=/^#s([1-5])$/.exec(location.hash);go(h?+h[1]-1:0);
+addEventListener('hashchange',()=>{const m=/^#s([1-5])$/.exec(location.hash);if(m&&+m[1]-1!==cur)go(+m[1]-1);});
+})();
+</script>
+
+</body>
+</html>
