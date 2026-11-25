@@ -4,7 +4,7 @@
 
 AI for Finance — Final Capstone (Type A: free application) · IE Business School, Master in Finance · Wassim Ibrahim
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wassimibrahim>/bess-spain-capstone/blob/main/notebooks/capstone_bess_spain.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wassimibrahim/bess-spain-capstone/blob/main/notebooks/capstone_bess_spain.ipynb)
 
 ## The question
 
